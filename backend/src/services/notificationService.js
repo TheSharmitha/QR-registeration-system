@@ -17,11 +17,11 @@ if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
 }
 
 /**
- * Dispatches the message via Twilio (SMS or WhatsApp) or falls back to console mock logs.
+ * Dispatches the message via Twilio (SMS by default) or falls back to console mock logs.
  */
-async function dispatchMessage({ to, body, useWhatsApp = true }) {
+async function dispatchMessage({ to, body, useWhatsApp = false }) {
   if (!twilioClient) {
-    logger.info('Notification Service (MOCK FALLBACK): Send to %s: "%s"', to, body);
+    logger.info('Notification Service (MOCK FALLBACK): SMS to %s: "%s"', to, body);
     return { success: true, provider: 'MOCK_GATEWAY' };
   }
 
@@ -32,7 +32,7 @@ async function dispatchMessage({ to, body, useWhatsApp = true }) {
     
     const toNumber = useWhatsApp ? `whatsapp:${to}` : to;
 
-    logger.info('Notification Service: Dispatching Twilio message to %s...', toNumber);
+    logger.info('Notification Service: Dispatching Twilio message via %s to %s...', useWhatsApp ? 'WhatsApp' : 'SMS', toNumber);
     
     const response = await twilioClient.messages.create({
       body,
@@ -40,7 +40,7 @@ async function dispatchMessage({ to, body, useWhatsApp = true }) {
       to: toNumber,
     });
 
-    logger.info('Notification Service: Twilio message sent successfully. SID: %s', response.sid);
+    logger.info('Notification Service: Twilio %s sent successfully. SID: %s', useWhatsApp ? 'WhatsApp' : 'SMS', response.sid);
     return { success: true, sid: response.sid, provider: 'TWILIO' };
   } catch (err) {
     logger.error('Notification Service: Twilio API dispatch failed for recipient %s: %s', to, err.message);
@@ -61,7 +61,7 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
 
   const body = `Hello ${patientName}, your registration at ASCAS has been approved! Your Patient ID is ${ascasPatientId}. Your appointment is confirmed with Dr. ${doctorName} on ${formattedDate} at ${appointmentTime}. Please show your ID at the front desk upon arrival.`;
 
-  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: true });
+  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: false });
 }
 
 /**
@@ -70,7 +70,7 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
 async function sendWhatsAppRejection(patientName, phoneNumber, remarks) {
   const body = `Hello ${patientName}, your recent ASCAS online registration could not be completed. Reason: ${remarks}. Please try scheduling for another date by re-submitting the form or contact our front desk directly.`;
 
-  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: true });
+  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: false });
 }
 
 module.exports = {
