@@ -205,6 +205,16 @@ const swaggerDocument = {
 // Swagger Docs Route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// Root Health Check Route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    service: 'ASCAS QR Registration Backend',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Public Routes
 app.post('/api/login', authController.login);
 app.post('/api/registration', validateRegistration, checkValidation, regController.submitRegistration);
