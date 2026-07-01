@@ -1,69 +1,76 @@
 const logger = require('../utils/logger');
+let twilioClient = null;
+
+// Initialize Twilio client if credentials are provided in the environment
+const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, TWILIO_WHATSAPP_NUMBER } = process.env;
+
+if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
+  try {
+    const twilio = require('twilio');
+    twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+    logger.info('Notification Service: Twilio client initialized successfully.');
+  } catch (err) {
+    logger.error('Notification Service: Failed to initialize Twilio client: %s', err.message);
+  }
+} else {
+  logger.warn('Notification Service: Twilio credentials missing. Running in mock fallback mode.');
+}
+
+/**
+ * Dispatches the message via Twilio (SMS or WhatsApp) or falls back to console mock logs.
+ */
+async function dispatchMessage({ to, body, useWhatsApp = true }) {
+  if (!twilioClient) {
+    logger.info('Notification Service (MOCK FALLBACK): Send to %s: "%s"', to, body);
+    return { success: true, provider: 'MOCK_GATEWAY' };
+  }
+
+  try {
+    const fromNumber = useWhatsApp 
+      ? `whatsapp:${TWILIO_WHATSAPP_NUMBER}` 
+      : TWILIO_PHONE_NUMBER;
+    
+    const toNumber = useWhatsApp ? `whatsapp:${to}` : to;
+
+    logger.info('Notification Service: Dispatching Twilio message to %s...', toNumber);
+    
+    const response = await twilioClient.messages.create({
+      body,
+      from: fromNumber,
+      to: toNumber,
+    });
+
+    logger.info('Notification Service: Twilio message sent successfully. SID: %s', response.sid);
+    return { success: true, sid: response.sid, provider: 'TWILIO' };
+  } catch (err) {
+    logger.error('Notification Service: Twilio API dispatch failed for recipient %s: %s', to, err.message);
+    return { success: false, error: err.message };
+  }
+}
 
 /**
  * Sends a confirmation message to the patient upon registration approval.
- * Supports formatting dates to IST and contains placeholders for Twilio/WhatsApp API.
  */
 async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId, appointmentDate, appointmentTime, doctorName) {
-  try {
-    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+  const formattedDate = new Date(appointmentDate).toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 
-    logger.info('Notification Service: Preparing approval message for %s (%s)...', patientName, phoneNumber);
+  const body = `Hello ${patientName}, your registration at ASCAS has been approved! Your Patient ID is ${ascasPatientId}. Your appointment is confirmed with Dr. ${doctorName} on ${formattedDate} at ${appointmentTime}. Please show your ID at the front desk upon arrival.`;
 
-    // Placeholder: Twilio / WhatsApp Business API Gateway Integration
-    // const client = require('twilio')(accountSid, authToken);
-    // await client.messages.create({
-    //   from: 'whatsapp:+14155238886',
-    //   to: `whatsapp:${phoneNumber}`,
-    //   body: `Hello ${patientName}, your registration at ASCAS has been approved! Your Patient ID is ${ascasPatientId}. Your appointment is confirmed with Dr. ${doctorName} on ${formattedDate} at ${appointmentTime}. Please show your ID at the front desk upon arrival.`
-    // });
-
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    logger.info('Notification Service: Message successfully sent to %s. Content: "Hello %s, your registration at ASCAS has been approved! Your Patient ID is %s. Your appointment is confirmed with Dr. %s on %s at %s. Please show your ID at the front desk upon arrival."',
-      phoneNumber, patientName, ascasPatientId, doctorName, formattedDate, appointmentTime
-    );
-
-    return { success: true, provider: 'MOCK_GATEWAY' };
-  } catch (error) {
-    logger.error('Notification Service: Failed to send approval message to %s: %s', phoneNumber, error.message);
-    return { success: false, error: error.message };
-  }
+  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: true });
 }
 
 /**
  * Sends a rejection message to the patient upon registration rejection.
  */
 async function sendWhatsAppRejection(patientName, phoneNumber, remarks) {
-  try {
-    logger.info('Notification Service: Preparing rejection message for %s (%s)...', patientName, phoneNumber);
+  const body = `Hello ${patientName}, your recent ASCAS online registration could not be completed. Reason: ${remarks}. Please try scheduling for another date by re-submitting the form or contact our front desk directly.`;
 
-    // Placeholder: Twilio / WhatsApp Business API Gateway Integration
-    // const client = require('twilio')(accountSid, authToken);
-    // await client.messages.create({
-    //   from: 'whatsapp:+14155238886',
-    //   to: `whatsapp:${phoneNumber}`,
-    //   body: `Hello ${patientName}, your recent ASCAS online registration could not be completed. Reason: ${remarks}. Please try scheduling for another date by re-submitting the form or contact our front desk directly.`
-    // });
-
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    logger.info('Notification Service: Message successfully sent to %s. Content: "Hello %s, your recent ASCAS online registration could not be completed. Reason: %s. Please try scheduling for another date by re-submitting the form or contact our front desk directly."',
-      phoneNumber, patientName, remarks
-    );
-
-    return { success: true, provider: 'MOCK_GATEWAY' };
-  } catch (error) {
-    logger.error('Notification Service: Failed to send rejection message to %s: %s', phoneNumber, error.message);
-    return { success: false, error: error.message };
-  }
+  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: true });
 }
 
 module.exports = {
