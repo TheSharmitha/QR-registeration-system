@@ -231,6 +231,22 @@ async function approveRegistration(req, res) {
         });
       }
 
+      // 4.5 Check if the time slot is already booked for this doctor on this day (Double-booking prevention)
+      const existingAppointment = await tx.appointment.findFirst({
+        where: {
+          doctor_name: finalDoctor,
+          appointment_date: finalApptDate,
+          appointment_time: appointment_time,
+          status: 'SCHEDULED',
+        },
+      });
+
+      if (existingAppointment) {
+        const error = new Error(`The time slot ${appointment_time} is already allocated for ${finalDoctor} on this date. Please select another slot.`);
+        error.statusCode = 400;
+        throw error;
+      }
+
       // 5. Create entry in appointments
       const appointment = await tx.appointment.create({
         data: {
@@ -310,7 +326,8 @@ async function approveRegistration(req, res) {
 
   } catch (error) {
     logger.error('Failed to approve registration Temp ID %s: %s', tmp_id, error.stack);
-    return res.status(500).json({ error: error.message || 'Internal Server Error during approval' });
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({ error: error.message || 'Internal Server Error during approval' });
   }
 }
 
