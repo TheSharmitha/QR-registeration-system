@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import PatientForm from './pages/PatientForm.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import ManageUsers from './pages/ManageUsers.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -18,9 +19,20 @@ function AppContent() {
     return !!localStorage.getItem('ascas_token');
   };
 
+  const isAdmin = () => {
+    const userStr = localStorage.getItem('ascas_user');
+    if (!userStr) return false;
+    try {
+      const user = JSON.parse(userStr);
+      return user.role === 'ADMIN';
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <div className="app-container">
-      {/* Conditionally Render Header: ONLY on staff views (/login, /dashboard) */}
+      {/* Conditionally Render Header: ONLY on staff views (/login, /dashboard, /users) */}
       {!isPatientView && (
         <header className="header">
           <Link to="/dashboard" className="brand">
@@ -33,6 +45,11 @@ function AppContent() {
           <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             {isAuthenticated() ? (
               <>
+                {isAdmin() && (
+                  <Link to="/users" className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                    👥 Manage Staff
+                  </Link>
+                )}
                 <Link to="/dashboard" className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
                   Dashboard
                 </Link>
@@ -57,6 +74,10 @@ function AppContent() {
         <Route 
           path="/dashboard" 
           element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/users" 
+          element={isAuthenticated() && isAdmin() ? <ManageUsers /> : <Navigate to="/dashboard" replace />} 
         />
         <Route path="*" element={<Navigate to="/register" replace />} />
       </Routes>

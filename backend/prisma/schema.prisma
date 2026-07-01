@@ -71,14 +71,19 @@ model Appointment {
   @@map("appointments")
 }
 
-// 4. Users Table (Receptionists)
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String   // Hashed password
-  name      String
-  role      String   @default("RECEPTIONIST")
-  createdAt DateTime @default(now())
+enum StaffRole {
+  RECEPTIONIST
+  ADMIN
+}
 
-  @@map("users")
+// 4. Staff Users Table
+model StaffUser {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  password   String    // Hashed password
+  name       String
+  role       StaffRole @default(RECEPTIONIST)
+  created_at DateTime  @default(now())
+
+  @@map("staff_users")
 }

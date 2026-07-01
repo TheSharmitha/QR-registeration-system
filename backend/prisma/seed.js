@@ -10,19 +10,30 @@ async function main() {
   await prisma.appointment.deleteMany({});
   await prisma.patientDetails.deleteMany({});
   await prisma.tmpPatientDetails.deleteMany({});
-  await prisma.user.deleteMany({});
+  await prisma.staffUser.deleteMany({});
 
-  // 2. Create receptionist user
+  // 2. Create staff users
   const hashedPassword = await bcrypt.hash('password123', 10);
-  const receptionist = await prisma.user.create({
+  
+  const admin = await prisma.staffUser.create({
     data: {
       username: 'admin',
       password: hashedPassword,
       name: 'Sarah Jenkins',
+      role: 'ADMIN',
+    },
+  });
+  console.log('Created admin staff user:', admin.username);
+
+  const receptionist = await prisma.staffUser.create({
+    data: {
+      username: 'receptionist',
+      password: hashedPassword,
+      name: 'John Smith',
       role: 'RECEPTIONIST',
     },
   });
-  console.log('Created receptionist user:', receptionist.username);
+  console.log('Created receptionist staff user:', receptionist.username);
 
   // 3. Create some existing approved patients (to test ascas_patient_id sequence generation)
   const patient1 = await prisma.patientDetails.create({

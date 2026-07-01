@@ -15,7 +15,7 @@ async function login(req, res) {
 
   try {
     // 1. Fetch user from DB
-    const user = await prisma.user.findUnique({
+    const user = await prisma.staffUser.findUnique({
       where: { username },
     });
 

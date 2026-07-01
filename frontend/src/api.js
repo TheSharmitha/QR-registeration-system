@@ -80,4 +80,14 @@ export const rejectRegistration = async (tmpId, remarks) => {
   return response.data;
 };
 
+export const registerStaffUser = async (userData) => {
+  const response = await api.post('/users/register', userData);
+  return response.data;
+};
+
+export const getStaffList = async () => {
+  const response = await api.get('/users');
+  return response.data;
+};
+
 export default api;

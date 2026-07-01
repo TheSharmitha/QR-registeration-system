@@ -4,9 +4,10 @@ const helmet = require('helmet');
 const swaggerUi = require('swagger-ui-express');
 const logger = require('./utils/logger');
 const { verifyToken } = require('./middleware/authMiddleware');
-const { validateRegistration, checkValidation } = require('./middleware/validationMiddleware');
+const { validateRegistration, validateStaffUser, checkValidation } = require('./middleware/validationMiddleware');
 const authController = require('./controllers/authController');
 const regController = require('./controllers/registrationController');
+const userController = require('./controllers/userController');
 const { initCronJobs } = require('./utils/cronJobs');
 
 const app = express();
@@ -199,6 +200,35 @@ const swaggerDocument = {
         },
       },
     },
+    '/users/register': {
+      post: {
+        summary: 'Admin-only Staff User Registration',
+        description: 'Creates a new receptionist or admin staff account (JWT Protected, ADMIN only)',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['username', 'password', 'name', 'role'],
+                properties: {
+                  username: { type: 'string', example: 'receptionist2' },
+                  password: { type: 'string', example: 'securePassword123' },
+                  name: { type: 'string', example: 'Bob Miller' },
+                  role: { type: 'string', enum: ['RECEPTIONIST', 'ADMIN'], example: 'RECEPTIONIST' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: 'Staff user created successfully' },
+          400: { description: 'Validation errors' },
+          403: { description: 'Forbidden. Requester is not an admin' },
+        },
+      },
+    },
   },
 };
 
@@ -226,6 +256,8 @@ app.get('/api/master/visit-types', regController.getVisitTypes);
 app.get('/api/registration/pending', verifyToken, regController.getPendingRegistrations);
 app.post('/api/registration/approve/:tmp_id', verifyToken, regController.approveRegistration);
 app.post('/api/registration/reject/:tmp_id', verifyToken, regController.rejectRegistration);
+app.post('/api/users/register', verifyToken, validateStaffUser, checkValidation, userController.registerStaff);
+app.get('/api/users', verifyToken, userController.getStaffList);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

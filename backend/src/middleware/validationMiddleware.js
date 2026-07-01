@@ -65,6 +65,30 @@ const validateRegistration = [
     }),
 ];
 
+// Validation rules for staff user registration
+const validateStaffUser = [
+  body('username')
+    .trim()
+    .notEmpty().withMessage('Username is required')
+    .isAlphanumeric().withMessage('Username must contain only letters and numbers')
+    .isLength({ min: 3, max: 30 }).withMessage('Username must be between 3 and 30 characters'),
+  
+  body('password')
+    .trim()
+    .notEmpty().withMessage('Password is required')
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  
+  body('name')
+    .trim()
+    .notEmpty().withMessage('Full name is required')
+    .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters'),
+  
+  body('role')
+    .trim()
+    .notEmpty().withMessage('Role is required')
+    .isIn(['RECEPTIONIST', 'ADMIN']).withMessage('Role must be RECEPTIONIST or ADMIN'),
+];
+
 // Middleware to check validation results and return formatted errors
 function checkValidation(req, res, next) {
   const errors = validationResult(req);
@@ -80,5 +104,6 @@ function checkValidation(req, res, next) {
 
 module.exports = {
   validateRegistration,
+  validateStaffUser,
   checkValidation,
 };
