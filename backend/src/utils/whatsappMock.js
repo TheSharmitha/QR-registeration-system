@@ -4,7 +4,7 @@ const logger = require('./logger');
  * Mock service to send WhatsApp message confirmation to the patient.
  * In a real application, this would invoke a WhatsApp Business API provider (like Twilio, Gupshup, etc.)
  */
-async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId, appointmentDate, doctorName) {
+async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId, appointmentDate, appointmentTime, doctorName) {
   try {
     const formattedDate = new Date(appointmentDate).toLocaleDateString('en-IN', {
       timeZone: 'Asia/Kolkata',
@@ -13,20 +13,13 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
       year: 'numeric',
     });
 
-    const formattedTime = new Date(appointmentDate).toLocaleTimeString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-
     logger.info('WhatsApp Hook Triggered: Sending approval notification message to %s...', phoneNumber, {
       meta: {
         to: phoneNumber,
         patientName,
         ascasPatientId,
         appointmentDate: formattedDate,
-        appointmentTime: formattedTime,
+        appointmentTime,
         doctorName,
       }
     });
@@ -35,7 +28,7 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
     await new Promise((resolve) => setTimeout(resolve, 600));
 
     logger.info('WhatsApp Notification Sent Successfully to %s. Content: "Hello %s, your registration at ASCAS has been approved! Your Patient ID is %s. Your appointment is confirmed with Dr. %s on %s at %s. Please show your ID at the front desk upon arrival."',
-      phoneNumber, patientName, ascasPatientId, doctorName, formattedDate, formattedTime
+      phoneNumber, patientName, ascasPatientId, doctorName, formattedDate, appointmentTime
     );
 
     return {

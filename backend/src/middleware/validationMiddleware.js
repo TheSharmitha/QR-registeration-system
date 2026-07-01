@@ -91,6 +91,24 @@ const validateStaffUser = [
     .isIn(['RECEPTIONIST', 'ADMIN']).withMessage('Role must be RECEPTIONIST or ADMIN'),
 ];
 
+// Validation rules for registration approval workflow
+const validateApproval = [
+  body('appointment_time')
+    .trim()
+    .notEmpty().withMessage('Appointment time is required')
+    .matches(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Appointment time must be in HH:MM format (24-hour style)'),
+  body('doctor_name')
+    .trim()
+    .notEmpty().withMessage('Doctor name is required'),
+  body('visit_type')
+    .trim()
+    .notEmpty().withMessage('Visit type is required'),
+  body('appointment_date')
+    .trim()
+    .notEmpty().withMessage('Appointment date is required')
+    .isISO8601().withMessage('Appointment date must be a valid ISO8601 date'),
+];
+
 // Middleware to check validation results and return formatted errors
 function checkValidation(req, res, next) {
   const errors = validationResult(req);
@@ -107,5 +125,6 @@ function checkValidation(req, res, next) {
 module.exports = {
   validateRegistration,
   validateStaffUser,
+  validateApproval,
   checkValidation,
 };

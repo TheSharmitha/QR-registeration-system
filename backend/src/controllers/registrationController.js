@@ -147,7 +147,7 @@ async function getPendingRegistrations(req, res) {
  */
 async function approveRegistration(req, res) {
   const { tmp_id } = req.params;
-  const { doctor_name, visit_type, appointment_date, name, dob, gender, phone, remarks } = req.body;
+  const { doctor_name, visit_type, appointment_date, appointment_time, name, dob, gender, phone, remarks } = req.body;
   const receptionist = req.user.username;
 
   try {
@@ -237,6 +237,7 @@ async function approveRegistration(req, res) {
           patient_id: patient.id,
           doctor_name: finalDoctor,
           appointment_date: finalApptDate,
+          appointment_time: appointment_time,
           visit_type: finalVisitType,
           status: 'SCHEDULED',
         },
@@ -295,6 +296,7 @@ async function approveRegistration(req, res) {
       result.patient.phone,
       result.patient.ascas_patient_id,
       result.appointment.appointment_date,
+      result.appointment.appointment_time,
       result.appointment.doctor_name
     );
 

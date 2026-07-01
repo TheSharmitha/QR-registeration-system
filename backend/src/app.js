@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const swaggerUi = require('swagger-ui-express');
 const logger = require('./utils/logger');
 const { verifyToken, requireRole, revokeToken } = require('./middleware/authMiddleware');
-const { validateRegistration, validateStaffUser, checkValidation } = require('./middleware/validationMiddleware');
+const { validateRegistration, validateStaffUser, validateApproval, checkValidation } = require('./middleware/validationMiddleware');
 const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
 const authController = require('./controllers/authController');
 const regController = require('./controllers/registrationController');
@@ -262,7 +262,7 @@ app.get('/api/master/visit-types', regController.getVisitTypes);
 
 // Internal Protected Routes (Requires valid JWT token & RBAC check)
 app.get('/api/registration/pending', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), regController.getPendingRegistrations);
-app.post('/api/registration/approve/:tmp_id', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), regController.approveRegistration);
+app.post('/api/registration/approve/:tmp_id', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), validateApproval, checkValidation, regController.approveRegistration);
 app.post('/api/registration/reject/:tmp_id', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), regController.rejectRegistration);
 app.post('/api/users/register', verifyToken, requireRole(['ADMIN']), validateStaffUser, checkValidation, userController.registerStaff);
 app.get('/api/users', verifyToken, requireRole(['ADMIN']), userController.getStaffList);

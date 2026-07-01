@@ -64,6 +64,7 @@ model Appointment {
   patient          PatientDetails @relation(fields: [patient_id], references: [id], onDelete: Cascade)
   doctor_name      String
   appointment_date DateTime
+  appointment_time String         @default("10:00") // Allocated time (HH:MM format, e.g. "10:30")
   visit_type       String
   status           String         @default("SCHEDULED") // e.g. SCHEDULED, COMPLETED, CANCELLED
   created_at       DateTime       @default(now())

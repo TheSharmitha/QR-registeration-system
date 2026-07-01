@@ -38,6 +38,7 @@ function Dashboard() {
     gender: 'MALE',
     phone: '',
     appointment_date: '',
+    appointment_time: '',
     doctor_name: '',
     visit_type: '',
     remarks: '',
@@ -176,6 +177,7 @@ function Dashboard() {
       gender: record.gender,
       phone: record.phone,
       appointment_date: record.appointment_date.substring(0, 10),
+      appointment_time: '10:00', // Default time slot allocation
       doctor_name: doctors[0]?.name || '',
       visit_type: record.purpose_of_visit || visitTypes[0] || '',
       remarks: '',
@@ -201,6 +203,7 @@ function Dashboard() {
         gender: editForm.gender,
         phone: editForm.phone,
         appointment_date: editForm.appointment_date,
+        appointment_time: editForm.appointment_time,
         doctor_name: editForm.doctor_name,
         visit_type: editForm.visit_type,
         remarks: editForm.remarks || 'Approved and registered.',
@@ -574,18 +577,19 @@ function Dashboard() {
                       </div>
                     </div>
 
+                    <div className="form-group">
+                      <label>Mobile Phone</label>
+                      <input
+                        type="text"
+                        className="input-control"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        required
+                        disabled={actionLoading}
+                      />
+                    </div>
+
                     <div className="form-grid form-grid-2">
-                      <div className="form-group">
-                        <label>Mobile Phone</label>
-                        <input
-                          type="text"
-                          className="input-control"
-                          value={editForm.phone}
-                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                          required
-                          disabled={actionLoading}
-                        />
-                      </div>
                       <div className="form-group">
                         <label>Planned Appointment Date</label>
                         <input
@@ -593,6 +597,17 @@ function Dashboard() {
                           className="input-control"
                           value={editForm.appointment_date}
                           onChange={(e) => setEditForm({ ...editForm, appointment_date: e.target.value })}
+                          required
+                          disabled={actionLoading}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Allocated Appointment Time</label>
+                        <input
+                          type="time"
+                          className="input-control"
+                          value={editForm.appointment_time}
+                          onChange={(e) => setEditForm({ ...editForm, appointment_time: e.target.value })}
                           required
                           disabled={actionLoading}
                         />
