@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Create Axios Instance
+// Create Axios Instance using Vite environment variable
 const api = axios.create({
-  baseURL: '', // Using relative URL since Vite proxy handles localhost:5000 in dev
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -40,43 +40,43 @@ api.interceptors.response.use(
 
 // Public API Calls
 export const submitPatientRegistration = async (patientData) => {
-  const response = await api.post('/api/registration', patientData);
+  const response = await api.post('/registration', patientData);
   return response.data;
 };
 
 export const getFormMetadata = async () => {
-  const response = await api.get('/api/registration/form');
+  const response = await api.get('/registration/form');
   return response.data;
 };
 
 export const getDoctorsList = async () => {
-  const response = await api.get('/api/master/doctors');
+  const response = await api.get('/master/doctors');
   return response.data;
 };
 
 export const getVisitTypesList = async () => {
-  const response = await api.get('/api/master/visit-types');
+  const response = await api.get('/master/visit-types');
   return response.data;
 };
 
 // Internal Authenticated API Calls
 export const loginUser = async (username, password) => {
-  const response = await api.post('/api/login', { username, password });
+  const response = await api.post('/login', { username, password });
   return response.data;
 };
 
 export const getPendingRegistrations = async () => {
-  const response = await api.get('/api/registration/pending');
+  const response = await api.get('/registration/pending');
   return response.data;
 };
 
 export const approveRegistration = async (tmpId, approvalData) => {
-  const response = await api.post(`/api/registration/approve/${tmpId}`, approvalData);
+  const response = await api.post(`/registration/approve/${tmpId}`, approvalData);
   return response.data;
 };
 
 export const rejectRegistration = async (tmpId, remarks) => {
-  const response = await api.post(`/api/registration/reject/${tmpId}`, { remarks });
+  const response = await api.post(`/registration/reject/${tmpId}`, { remarks });
   return response.data;
 };
 
