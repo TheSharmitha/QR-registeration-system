@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      window.addEventListener('error', function(e) {
+        const errDiv = document.createElement('div');
+        errDiv.style.color = 'red';
+        errDiv.style.padding = '20px';
+        errDiv.style.background = '#fff';
+        errDiv.style.position = 'fixed';
+        errDiv.style.top = '0';
+        errDiv.style.left = '0';
+        errDiv.style.zIndex = '9999';
+        errDiv.style.fontSize = '16px';
+        errDiv.style.whiteSpace = 'pre-wrap';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.innerHTML = '<strong>Javascript Error:</strong><br>' + e.message + '<br>at ' + e.filename + ':' + e.lineno + ':' + e.colno + '<br><br>Stack:<br>' + (e.error ? e.error.stack : 'No stack');
+        document.body.appendChild(errDiv);
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        const errDiv = document.createElement('div');
+        errDiv.style.color = 'red';
+        errDiv.style.padding = '20px';
+        errDiv.style.background = '#fff';
+        errDiv.style.position = 'fixed';
+        errDiv.style.top = '0';
+        errDiv.style.left = '0';
+        errDiv.style.zIndex = '9999';
+        errDiv.style.fontSize = '16px';
+        errDiv.style.whiteSpace = 'pre-wrap';
+        errDiv.style.fontFamily = 'monospace';
+        errDiv.innerHTML = '<strong>Unhandled Rejection:</strong><br>' + e.reason + '<br><br>Stack:<br>' + (e.reason && e.reason.stack ? e.reason.stack : 'No stack');
+        document.body.appendChild(errDiv);
+      });
+    </script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏥%3C/text%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>ASCAS QR-Based Patient Registration System</title>
+    <meta name="description" content="Secure, touch-friendly, mobile-first QR code patient registration system for ASCAS clinics." />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

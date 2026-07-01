@@ -1,0 +1,84 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// 1. Existing Table (Reference Only - Do Not Modify)
+model PatientDetails {
+  id               Int           @id @default(autoincrement())
+  ascas_patient_id String        @unique
+  name             String
+  dob              DateTime
+  gender           Gender
+  phone            String
+  gov_id           String        // Encrypted Aadhaar
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+  appointments     Appointment[]
+
+  @@map("patient_details")
+}
+
+// 2. New Table mirroring PatientDetails with lifecycle fields
+model TmpPatientDetails {
+  tmp_id              String             @id @default(uuid())
+  name                String
+  dob                 DateTime
+  gender              Gender
+  phone               String
+  gov_id              String             // Masked or encrypted
+  purpose_of_visit    String
+  referral            String?
+  registration_status RegistrationStatus @default(PENDING)
+  submitted_at        DateTime           @default(now())
+  approved_at         DateTime?
+  approved_by         String?            // Username of the receptionist
+  remarks             String?
+  source              String             @default("QR_CODE")
+  ascas_patient_id    String?            // Nullable until approved
+  appointment_date    DateTime           // Date of planned visit
+
+  @@map("tmp_patient_details")
+}
+
+// 3. Appointments Table
+model Appointment {
+  id               Int            @id @default(autoincrement())
+  patient_id       Int
+  patient          PatientDetails @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  doctor_name      String
+  appointment_date DateTime
+  visit_type       String
+  status           String         @default("SCHEDULED") // e.g. SCHEDULED, COMPLETED, CANCELLED
+  created_at       DateTime       @default(now())
+
+  @@map("appointments")
+}
+
+// 4. Users Table (Receptionists)
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   @default("RECEPTIONIST")
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
