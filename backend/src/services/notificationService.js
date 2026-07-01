@@ -1,49 +1,53 @@
 const logger = require('../utils/logger');
-let twilioClient = null;
 
-// Initialize Twilio client if credentials are provided in the environment
-const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, TWILIO_WHATSAPP_NUMBER } = process.env;
+// Retrieve Textbelt API key if configured
+const TEXTBELT_API_KEY = process.env.TEXTBELT_API_KEY || 'textbelt';
 
-if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
-  try {
-    const twilio = require('twilio');
-    twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
-    logger.info('Notification Service: Twilio client initialized successfully.');
-  } catch (err) {
-    logger.error('Notification Service: Failed to initialize Twilio client: %s', err.message);
-  }
+if (TEXTBELT_API_KEY === 'textbelt') {
+  logger.info('Notification Service: Textbelt initialized with free key. Limit is 1 free SMS per day per IP.');
 } else {
-  logger.warn('Notification Service: Twilio credentials missing. Running in mock fallback mode.');
+  logger.info('Notification Service: Textbelt initialized with custom API key.');
 }
 
 /**
- * Dispatches the message via Twilio (SMS by default) or falls back to console mock logs.
+ * Dispatches the message via Textbelt API.
  */
-async function dispatchMessage({ to, body, useWhatsApp = false }) {
-  if (!twilioClient) {
-    logger.info('Notification Service (MOCK FALLBACK): SMS to %s: "%s"', to, body);
-    return { success: true, provider: 'MOCK_GATEWAY' };
+async function dispatchMessage({ to, body }) {
+  // Ensure the phone number starts with a country code (Textbelt requires it, e.g. +91 or +1)
+  let toNumber = to.trim();
+  if (!toNumber.startsWith('+')) {
+    // If it is a 10 digit number and no country code is set, default to Indian country code (+91)
+    if (toNumber.length === 10) {
+      toNumber = `+91${toNumber}`;
+    } else {
+      logger.warn('Notification Service: Phone number %s might be missing a country code prefix (+). Textbelt may fail.', toNumber);
+    }
   }
 
   try {
-    const fromNumber = useWhatsApp 
-      ? `whatsapp:${TWILIO_WHATSAPP_NUMBER}` 
-      : TWILIO_PHONE_NUMBER;
-    
-    const toNumber = useWhatsApp ? `whatsapp:${to}` : to;
+    logger.info('Notification Service: Dispatching Textbelt SMS to %s...', toNumber);
 
-    logger.info('Notification Service: Dispatching Twilio message via %s to %s...', useWhatsApp ? 'WhatsApp' : 'SMS', toNumber);
-    
-    const response = await twilioClient.messages.create({
-      body,
-      from: fromNumber,
-      to: toNumber,
+    const response = await fetch('https://textbelt.com/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: toNumber,
+        message: body,
+        key: TEXTBELT_API_KEY,
+      }),
     });
 
-    logger.info('Notification Service: Twilio %s sent successfully. SID: %s', useWhatsApp ? 'WhatsApp' : 'SMS', response.sid);
-    return { success: true, sid: response.sid, provider: 'TWILIO' };
+    const data = await response.json();
+
+    if (data.success) {
+      logger.info('Notification Service: Textbelt SMS sent successfully to %s. Quota remaining: %s', toNumber, data.quotaRemaining);
+      return { success: true, quotaRemaining: data.quotaRemaining, provider: 'TEXTBELT' };
+    } else {
+      logger.error('Notification Service: Textbelt API rejected dispatch to %s. Reason: %s', toNumber, data.error);
+      return { success: false, error: data.error };
+    }
   } catch (err) {
-    logger.error('Notification Service: Twilio API dispatch failed for recipient %s: %s', to, err.message);
+    logger.error('Notification Service: Textbelt dispatch failed for recipient %s: %s', toNumber, err.message);
     return { success: false, error: err.message };
   }
 }
@@ -61,7 +65,7 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
 
   const body = `Hello ${patientName}, your registration at ASCAS has been approved! Your Patient ID is ${ascasPatientId}. Your appointment is confirmed with Dr. ${doctorName} on ${formattedDate} at ${appointmentTime}. Please show your ID at the front desk upon arrival.`;
 
-  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: false });
+  return dispatchMessage({ to: phoneNumber, body });
 }
 
 /**
@@ -70,7 +74,7 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
 async function sendWhatsAppRejection(patientName, phoneNumber, remarks) {
   const body = `Hello ${patientName}, your recent ASCAS online registration could not be completed. Reason: ${remarks}. Please try scheduling for another date by re-submitting the form or contact our front desk directly.`;
 
-  return dispatchMessage({ to: phoneNumber, body, useWhatsApp: false });
+  return dispatchMessage({ to: phoneNumber, body });
 }
 
 module.exports = {
