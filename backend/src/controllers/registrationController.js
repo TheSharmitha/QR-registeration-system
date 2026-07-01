@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const logger = require('../utils/logger');
 const { encrypt, decrypt, maskAadhaar } = require('../utils/cryptoHelper');
-const { sendWhatsAppConfirmation, sendWhatsAppRejection } = require('../utils/whatsappMock');
+const { sendWhatsAppConfirmation, sendWhatsAppRejection } = require('../services/notificationService');
 
 const prisma = new PrismaClient();
 
