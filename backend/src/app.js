@@ -3,8 +3,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const swaggerUi = require('swagger-ui-express');
 const logger = require('./utils/logger');
-const { verifyToken } = require('./middleware/authMiddleware');
+const { verifyToken, requireRole, revokeToken } = require('./middleware/authMiddleware');
 const { validateRegistration, validateStaffUser, checkValidation } = require('./middleware/validationMiddleware');
+const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
 const authController = require('./controllers/authController');
 const regController = require('./controllers/registrationController');
 const userController = require('./controllers/userController');
@@ -29,6 +30,9 @@ app.use(helmet({
 }));
 app.use(cors({ origin: '*' })); // In production, restrict to frontend origin
 app.use(express.json());
+
+// Apply global rate limiting for DoS resilience
+app.use(globalLimiter);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -245,19 +249,29 @@ app.get('/', (req, res) => {
   });
 });
 
-// Public Routes
-app.post('/api/login', authController.login);
-app.post('/api/registration', validateRegistration, checkValidation, regController.submitRegistration);
+// Public Routes (Protected by strict rate limits)
+app.post('/api/login', authLimiter, authController.login);
+app.post('/api/registration', authLimiter, validateRegistration, checkValidation, regController.submitRegistration);
 app.get('/api/registration/form', regController.getFormMetadata);
 app.get('/api/master/doctors', regController.getDoctors);
 app.get('/api/master/visit-types', regController.getVisitTypes);
 
-// Internal Protected Routes (Requires valid JWT token)
-app.get('/api/registration/pending', verifyToken, regController.getPendingRegistrations);
-app.post('/api/registration/approve/:tmp_id', verifyToken, regController.approveRegistration);
-app.post('/api/registration/reject/:tmp_id', verifyToken, regController.rejectRegistration);
-app.post('/api/users/register', verifyToken, validateStaffUser, checkValidation, userController.registerStaff);
-app.get('/api/users', verifyToken, userController.getStaffList);
+// Internal Protected Routes (Requires valid JWT token & RBAC check)
+app.get('/api/registration/pending', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), regController.getPendingRegistrations);
+app.post('/api/registration/approve/:tmp_id', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), regController.approveRegistration);
+app.post('/api/registration/reject/:tmp_id', verifyToken, requireRole(['RECEPTIONIST', 'ADMIN']), regController.rejectRegistration);
+app.post('/api/users/register', verifyToken, requireRole(['ADMIN']), validateStaffUser, checkValidation, userController.registerStaff);
+app.get('/api/users', verifyToken, requireRole(['ADMIN']), userController.getStaffList);
+
+// Logout Route - Revokes token immediately
+app.post('/api/logout', verifyToken, (req, res) => {
+  try {
+    revokeToken(req.token);
+    res.json({ message: 'Logged out successfully. Session invalidated.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {

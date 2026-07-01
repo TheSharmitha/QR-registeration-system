@@ -40,12 +40,14 @@ const validateRegistration = [
   
   body('purpose_of_visit')
     .trim()
+    .escape()
     .notEmpty().withMessage('Purpose of visit is required')
     .isLength({ min: 3, max: 500 }).withMessage('Purpose of visit must be between 3 and 500 characters'),
   
   body('referral')
     .optional({ nullable: true, checkFalsy: true })
     .trim()
+    .escape()
     .isLength({ max: 100 }).withMessage('Referral must not exceed 100 characters'),
   
   body('appointment_date')

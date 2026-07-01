@@ -107,10 +107,14 @@ async function submitRegistration(req, res) {
  * Fetches all PENDING registration records.
  */
 async function getPendingRegistrations(req, res) {
+  // Defensive limit: Enforce maximum pagination bounds to prevent database DoS
+  const limit = Math.min(parseInt(req.query.limit, 10) || 50, 50);
+
   try {
     const pendingList = await prisma.tmpPatientDetails.findMany({
       where: { registration_status: 'PENDING' },
       orderBy: { submitted_at: 'desc' },
+      take: limit,
     });
 
     // Decrypt and mask Aadhaar for each record in the list for receptionist UI

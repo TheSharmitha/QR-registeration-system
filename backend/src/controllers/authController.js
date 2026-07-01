@@ -40,7 +40,7 @@ async function login(req, res) {
         role: user.role 
       },
       JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '1h' }
     );
 
     logger.info('User "%s" logged in successfully from IP %s', username, req.ip);

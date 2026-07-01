@@ -1,6 +1,12 @@
 const crypto = require('crypto');
+const logger = require('./logger');
 
-// Ensure the encryption key is loaded and is exactly 32 bytes (64 hex characters)
+// Security: Require ENCRYPTION_KEY to be configured in production
+if (process.env.NODE_ENV === 'production' && !process.env.ENCRYPTION_KEY) {
+  logger.error('CRITICAL: ENCRYPTION_KEY environment variable is missing in production!');
+  throw new Error('ENCRYPTION_KEY environment variable is required in production.');
+}
+
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 const ALGORITHM = 'aes-256-cbc';
 
