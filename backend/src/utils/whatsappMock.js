@@ -6,29 +6,27 @@ const logger = require('./logger');
  */
 async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId, appointmentDate, doctorName) {
   try {
-    const formattedDate = new Date(appointmentDate).toLocaleString('en-IN', {
+    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-IN', {
       timeZone: 'Asia/Kolkata',
-      dateStyle: 'medium',
-      timeStyle: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     });
 
-    const messagePayload = {
-      to: phoneNumber,
-      template: 'ascas_patient_registered',
-      parameters: {
-        patient_name: patientName,
-        ascas_id: ascasPatientId,
-        appointment_time: formattedDate,
-        doctor: doctorName,
-      },
-    };
+    const formattedTime = new Date(appointmentDate).toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
 
-    logger.info('WhatsApp Hook Triggered: Sending notification message to %s...', phoneNumber, {
+    logger.info('WhatsApp Hook Triggered: Sending approval notification message to %s...', phoneNumber, {
       meta: {
         to: phoneNumber,
         patientName,
         ascasPatientId,
         appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
         doctorName,
       }
     });
@@ -36,17 +34,49 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
     // Simulate Network Latency
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    logger.info('WhatsApp Notification Sent Successfully to %s. Content: "Hello %s, your registration with ASCAS is approved! ID: %s. Appointment scheduled on %s with %s."',
-      phoneNumber, patientName, ascasPatientId, formattedDate, doctorName
+    logger.info('WhatsApp Notification Sent Successfully to %s. Content: "Hello %s, your registration at ASCAS has been approved! Your Patient ID is %s. Your appointment is confirmed with Dr. %s on %s at %s. Please show your ID at the front desk upon arrival."',
+      phoneNumber, patientName, ascasPatientId, doctorName, formattedDate, formattedTime
     );
 
     return {
       success: true,
-      messageId: `wa_msg_${Math.random().toString(36).substring(2, 11)}`,
+      messageId: `wa_app_${Math.random().toString(36).substring(2, 11)}`,
     };
   } catch (error) {
-    logger.error('WhatsApp service hook failed for user %s: %s', patientName, error.message);
-    // Don't throw to prevent rolling back db transaction in case notification fails
+    logger.error('WhatsApp approval hook failed for user %s: %s', patientName, error.message);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Mock service to send WhatsApp rejection message to the patient (slot unavailable).
+ */
+async function sendWhatsAppRejection(patientName, phoneNumber, remarks) {
+  try {
+    logger.info('WhatsApp Hook Triggered: Sending rejection notification message to %s...', phoneNumber, {
+      meta: {
+        to: phoneNumber,
+        patientName,
+        remarks,
+      }
+    });
+
+    // Simulate Network Latency
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    logger.info('WhatsApp Notification Sent Successfully to %s. Content: "Hello %s, your recent ASCAS online registration is disapproved the requested slot. Reason: %s (Slot unavailable on this date/time). Please try scheduling for another date by re-submitting the form or contact our front desk directly."',
+      phoneNumber, patientName, remarks
+    );
+
+    return {
+      success: true,
+      messageId: `wa_rej_${Math.random().toString(36).substring(2, 11)}`,
+    };
+  } catch (error) {
+    logger.error('WhatsApp rejection hook failed for user %s: %s', patientName, error.message);
     return {
       success: false,
       error: error.message,
@@ -56,4 +86,5 @@ async function sendWhatsAppConfirmation(patientName, phoneNumber, ascasPatientId
 
 module.exports = {
   sendWhatsAppConfirmation,
+  sendWhatsAppRejection,
 };

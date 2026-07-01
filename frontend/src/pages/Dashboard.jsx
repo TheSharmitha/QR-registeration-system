@@ -583,15 +583,64 @@ function Dashboard() {
                   </>
                 ) : (
                   <>
-                    <div style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                    <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                       You are rejecting the registration for patient <strong>{selectedRecord.name}</strong>.
                     </div>
+                    
+                    {/* Rejection Notification Notice */}
+                    <div style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      borderRadius: '6px',
+                      padding: '0.75rem',
+                      marginBottom: '1.25rem',
+                      fontSize: '0.85rem',
+                      color: '#ef4444',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <span>⚠️</span>
+                      <span><strong>Notice:</strong> Rejecting this record will automatically send a status notification to the patient advising them to select an alternate date.</span>
+                    </div>
+
+                    {/* Quick Select Reason Chips */}
+                    <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                      <label style={{ marginBottom: '0.5rem', display: 'block', fontSize: '0.85rem', fontWeight: '600' }}>Quick Select Reason</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {[
+                          'Doctor Unavailable',
+                          'Slot Fully Booked',
+                          'Clinic Closed on Selected Date'
+                        ].map((reason) => (
+                          <button
+                            key={reason}
+                            type="button"
+                            onClick={() => setEditForm(prev => ({ ...prev, remarks: reason }))}
+                            style={{
+                              padding: '0.35rem 0.75rem',
+                              fontSize: '0.8rem',
+                              borderRadius: '20px',
+                              border: editForm.remarks === reason ? '1px solid #ef4444' : '1px solid var(--border)',
+                              backgroundColor: editForm.remarks === reason ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                              color: editForm.remarks === reason ? '#ef4444' : 'var(--text-primary)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              fontWeight: editForm.remarks === reason ? '600' : 'normal'
+                            }}
+                          >
+                            {reason}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="form-group">
                       <label>Rejection Reason / Remarks (Required)</label>
                       <textarea
                         className="input-control"
                         rows="4"
-                        placeholder="Please state clearly the reason for rejection (e.g., duplicate registration, incorrect mobile number)..."
+                        placeholder="Please select a quick reason above or type specific details..."
                         value={editForm.remarks}
                         onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })}
                         required

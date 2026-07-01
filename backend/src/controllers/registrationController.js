@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const logger = require('../utils/logger');
 const { encrypt, decrypt, maskAadhaar } = require('../utils/cryptoHelper');
-const { sendWhatsAppConfirmation } = require('../utils/whatsappMock');
+const { sendWhatsAppConfirmation, sendWhatsAppRejection } = require('../utils/whatsappMock');
 
 const prisma = new PrismaClient();
 
@@ -353,6 +353,13 @@ async function rejectRegistration(req, res) {
           remarks,
         }
       }
+    );
+
+    // Trigger WhatsApp notification for rejection asynchronously after database update succeeds
+    sendWhatsAppRejection(
+      updatedRecord.name,
+      updatedRecord.phone,
+      remarks
     );
 
     return res.json({
