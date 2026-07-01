@@ -22,4 +22,4 @@ RUN npx prisma generate
 EXPOSE 5000
 
 # Start server
-CMD ["sh", "-c", "npx prisma generate && npx prisma db push --accept-data-loss && npm start"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma db push --accept-data-loss && node prisma/seed.js && npm start"]

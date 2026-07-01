@@ -6,11 +6,12 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // 1. Clean existing records
-  await prisma.appointment.deleteMany({});
-  await prisma.patientDetails.deleteMany({});
-  await prisma.tmpPatientDetails.deleteMany({});
-  await prisma.staffUser.deleteMany({});
+  // 1. Check if database is already seeded (Safety Guard for production restarts)
+  const staffCount = await prisma.staffUser.count();
+  if (staffCount > 0) {
+    console.log('Database is already seeded with staff records. Skipping seed execution to preserve existing data.');
+    return;
+  }
 
   // 2. Create staff users
   const hashedPassword = await bcrypt.hash('password123', 10);

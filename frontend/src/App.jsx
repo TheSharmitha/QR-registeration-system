@@ -77,7 +77,7 @@ function AppContent() {
         />
         <Route 
           path="/users" 
-          element={isAuthenticated() && isAdmin() ? <ManageUsers /> : <Navigate to="/dashboard" replace />} 
+          element={isAuthenticated() && isAdmin() ? <ManageUsers /> : (isAuthenticated() ? <Navigate to="/dashboard" state={{ unauthorized: true }} replace /> : <Navigate to="/login" replace />)} 
         />
         <Route path="*" element={<Navigate to="/register" replace />} />
       </Routes>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   getPendingRegistrations, 
   getDoctorsList, 
@@ -46,6 +47,8 @@ function Dashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [receptionistName, setReceptionistName] = useState('Sarah Jenkins');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [alertMsg, setAlertMsg] = useState('');
 
   // Load User details
   useEffect(() => {
@@ -53,8 +56,18 @@ function Dashboard() {
     if (userStr) {
       const u = JSON.parse(userStr);
       setReceptionistName(u.name || u.username);
+      setCurrentUser(u);
     }
   }, []);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state && location.state.unauthorized) {
+      setAlertMsg('Access Denied: Only administrators are authorized to access the staff management panel.');
+      // Clear navigation state to prevent alert from persisting on reload
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Fetch pending registration and master lists
   const fetchData = async () => {
@@ -254,13 +267,65 @@ function Dashboard() {
             Approve QR-submitted registrations and book doctor appointments
           </p>
         </div>
-        <div className="receptionist-badge">
-          <span className="active-dot"></span>
-          <span>Station: <strong>Reception Main Desk</strong></span>
-          <span style={{ color: 'var(--text-muted)' }}>|</span>
-          <span>Logged in as: <strong>{receptionistName}</strong></span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          {currentUser && currentUser.role === 'ADMIN' && (
+            <Link 
+              to="/users" 
+              className="btn btn-secondary" 
+              style={{ 
+                padding: '0.5rem 1rem', 
+                fontSize: '0.85rem', 
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
+            >
+              👥 Manage Staff Accounts
+            </Link>
+          )}
+          <div className="receptionist-badge">
+            <span className="active-dot"></span>
+            <span>Station: <strong>Reception Main Desk</strong></span>
+            <span style={{ color: 'var(--text-muted)' }}>|</span>
+            <span>Logged in as: <strong>{receptionistName}</strong></span>
+          </div>
         </div>
       </div>
+
+      {alertMsg && (
+        <div style={{
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          borderRadius: '6px',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.5rem',
+          color: '#ef4444',
+          fontSize: '0.9rem',
+          fontWeight: '500',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <span>⛔ {alertMsg}</span>
+          <button 
+            type="button" 
+            onClick={() => setAlertMsg('')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '1.2rem',
+              lineHeight: '1'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Stats Counter Section */}
       <div className="stats-grid">
