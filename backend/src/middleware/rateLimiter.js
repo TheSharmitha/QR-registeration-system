@@ -16,10 +16,10 @@ const globalLimiter = rateLimit({
   }
 });
 
-// Strict Rate Limiter: Applied to public submission forms & login routes (20 submissions per 15 minutes per IP)
+// Strict Rate Limiter: Applied to public submission forms & login routes (5 submissions per 1 minute per IP)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

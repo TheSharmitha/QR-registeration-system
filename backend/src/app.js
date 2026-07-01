@@ -28,7 +28,11 @@ app.use(helmet({
     },
   },
 }));
-app.use(cors({ origin: '*' })); // In production, restrict to frontend origin
+// Hardened CORS settings for Render production deployment
+app.use(cors({
+  origin: ['https://ascas-frontend.onrender.com', 'http://localhost', 'http://127.0.0.1'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Apply global rate limiting for DoS resilience

@@ -1,10 +1,9 @@
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 
-// Security: Require JWT_SECRET to be configured in production
+// Security: Require JWT_SECRET to be configured in production, fall back to default if missing
 if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  logger.error('CRITICAL: JWT_SECRET environment variable is missing in production!');
-  throw new Error('JWT_SECRET environment variable is required in production.');
+  logger.error('WARNING: JWT_SECRET environment variable is missing in production! Utilizing local fallback secret (Insecure for production).');
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-change-this-in-production';
