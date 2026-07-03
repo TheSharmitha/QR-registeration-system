@@ -305,16 +305,8 @@ async function approveRegistration(req, res) {
       }
     );
 
-    // 8. Trigger mock service hook for sending WhatsApp confirmation to the patient
-    // Note: This runs asynchronously after the transaction completes successfully
-    sendWhatsAppConfirmation(
-      result.patient.name,
-      result.patient.phone,
-      result.patient.ascas_patient_id,
-      result.appointment.appointment_date,
-      result.appointment.appointment_time,
-      result.appointment.doctor_name
-    );
+    // Outbound notification disabled as per request
+    logger.info('Notification skipped: Confirmation SMS is disabled.');
 
     return res.json({
       message: result.isDuplicate
@@ -378,12 +370,8 @@ async function rejectRegistration(req, res) {
       }
     );
 
-    // Trigger WhatsApp notification for rejection asynchronously after database update succeeds
-    sendWhatsAppRejection(
-      updatedRecord.name,
-      updatedRecord.phone,
-      remarks
-    );
+    // Outbound notification disabled as per request
+    logger.info('Notification skipped: Rejection SMS is disabled.');
 
     return res.json({
       message: 'Registration rejected successfully.',
